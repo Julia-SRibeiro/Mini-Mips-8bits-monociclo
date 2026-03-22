@@ -36,6 +36,7 @@ typedef struct{
 // FUNCTIONS
 void carrega_mem (memoria_instrucao* mem_inst);
 void carrega_dat (memoria_dados* mem_dados);
+void executa_programa (memoria_instrucao* mem_inst);
 
 //MAIN
 int main(){ 
@@ -183,4 +184,21 @@ void carrega_dat (memoria_dados* mem_dados){
     printf("%d dados carregados.\n", mem_dados->tamanho);
     fclose(arquivo);
 
+};
+
+void executa_programa(memoria_instrucao* mem_inst) {
+    if (mem_inst ->inst == NULL || mem_inst -> tamanho == 0) {
+printf("Nenhuma instrucao carregada.\n");
+    }
+    
+int PC=0;
+
+while(PC < (mem_inst->tamanho)) {
+printf("PC = %d\n", PC);
+
+// Não faz nada com a instrução ainda, depois de separar o opcode precisa alterar
+    
+PC++;
+}
+printf("Fim do programa.\n");
 };
