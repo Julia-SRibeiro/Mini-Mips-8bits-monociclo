@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #define MAX 256
+#define NUM_REG 8
 
 // STRUCT / ENUM
 typedef enum{
@@ -32,10 +33,17 @@ typedef struct{
 
 }memoria_dados;
 
+typedef struct {
+    char reg[NUM_REG];
+} banco_registradores;
+
 
 // FUNCTIONS
 void carrega_mem (memoria_instrucao* mem_inst);
 void carrega_dat (memoria_dados* mem_dados);
+
+void inicializa_reg(banco_registradores* banReg);
+
 
 //MAIN
 int main(){ 
@@ -43,9 +51,12 @@ int main(){
 
     memoria_instrucao* mem_inst = (memoria_instrucao*) malloc(sizeof(memoria_instrucao));
     memoria_dados* mem_dados = (memoria_dados*) malloc(sizeof(memoria_dados));
+    banco_registradores* banReg = malloc(sizeof(banco_registradores));
 
     mem_inst->inst = NULL;
     mem_dados->dados = NULL;
+
+    //inicializa_reg(banReg);
 
     do {
         printf("\nMENU\n");
@@ -184,3 +195,25 @@ void carrega_dat (memoria_dados* mem_dados){
     fclose(arquivo);
 
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void inicializa_reg(banco_registradores* banReg) {
+    for (int i=0; i<NUM_REG; i++) {
+    banReg->[i]=0;
+    }
+}
+
+
