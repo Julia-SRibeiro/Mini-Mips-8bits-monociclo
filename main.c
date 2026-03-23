@@ -183,7 +183,6 @@ void carrega_dat (memoria_dados* mem_dados){
 
     printf("%d dados carregados.\n", mem_dados->tamanho);
     fclose(arquivo);
-
 };
 
 void executa_programa(memoria_instrucao* mem_inst) {
