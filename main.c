@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sistema.h>
+#include "sistema.h"
 
 int main(){ 
     int menu;
@@ -31,28 +31,31 @@ int main(){
         switch (menu) {
             case 1:
                 carrega_mem (mem_inst);
-                break;
+            break;
             case 2:
                 carrega_dat (mem_dados);
-                break;
+            break;
             case 3:
-                break;
+                print_mem_inst(mem_inst);
+                print_mem_dat(mem_dados);
+            break;
             case 4:
-                break;
+            break;
             case 5:
-                break;
+            break;
             case 6:
-                break;
+            break;
             case 7:
-                break;
+            break;
             case 8:
-                break;
+            break;
             case 9:
-                break;
+            break;
             case 10:
-                break;
+            break;
             case 0:
-                break;
+                printf("Encerrando programa.");
+            break;
             default:
                 printf("Numero invalido!");
                 break;
@@ -66,4 +69,28 @@ int main(){
     free(mem_dados);
 
     return 0;
+}
+
+// FUNCTIONS
+void limpa_buffer() {
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF)
+    ;
+}
+
+int separa_bits(char *b, int ini, int nBits) {
+    int n = 0;
+    for (int i = 0; i < nBits; i++) {
+        n = (n << 1) | (b[ini + i] == '1' ? 1 : 0); 
+        //n = (n * 2) + (b[ini + i] == '1' ? 1 : 0);
+    }
+    return n;
+}
+int bits_imm(char *b) {
+    int val = separa_bits(b, 10, 6);
+    return (val << 2) >> 2;
+}
+int bits_jump(char *b) {
+    int val = separa_bits(b, 4, 12);
+    return val & 0xFF;
 }

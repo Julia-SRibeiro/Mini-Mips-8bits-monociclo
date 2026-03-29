@@ -1,5 +1,7 @@
 #include <stdio.h>
-#include <sistema.h>
+#include <stdlib.h>
+#include <string.h>
+#include "sistema.h"
 
 void carrega_dat (memoria_dados* mem_dados){
     char arq[50];
@@ -49,4 +51,51 @@ void carrega_dat (memoria_dados* mem_dados){
 
     printf("%d dados carregados.\n", mem_dados->tamanho);
     fclose(arquivo);
+}
+
+void print_mem_dat(memoria_dados* imp_dados){
+   if (imp_dados->dados == NULL) {
+       printf("Memoria de dados nao carregada.\n");
+       return;
+   }
+
+   int total = imp_dados->tamanho;
+   int zeros = 0, nao_zeros = 0;
+
+
+   // Conta valores
+   for (int i = 0; i < total; i++) {
+       if (imp_dados->dados[i] != 0)
+           nao_zeros++;
+       else
+           zeros++;
+   }
+
+
+   printf("\nMemoria de dados (%d posicao(oes) carregada(s), %d nao-zero):\n",
+          total, nao_zeros);
+
+
+   if (nao_zeros == 0) {
+       printf("  (todas as posicoes sao zero)\n");
+       printf("Total: %d posicao(oes)\n", total);
+       return;
+   }
+
+
+   printf("+-------+--------+\n");
+   printf("| Addr  | Valor|\n");
+   printf("+-------+--------+\n");
+
+
+   for (int i = 0; i < total; i++) {
+       int v = imp_dados->dados[i];
+       if (v != 0)
+           printf("| %5d | %6d |\n", i, v);
+   }
+
+
+   printf("+-------+--------+\n");
+   printf("  (%d posicao(oes) com valor zero omitida(s))\n", zeros);
+   printf("Total: %d posicao(oes)\n", total);
 }
