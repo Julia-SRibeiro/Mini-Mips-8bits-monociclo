@@ -3,6 +3,7 @@
 
 #define MAX 256
 #define NUM_REG 8
+#define CICLOS_MAX (MAX * 20) /* limite anti-loop infinito */
 
 // STRUCTs e ENUMs
 typedef enum {
@@ -47,11 +48,15 @@ void carrega_mem(memoria_instrucao* mem_inst);
 void print_mem_inst(memoria_instrucao* imp_inst);
 void carrega_dat(memoria_dados* mem_dados);
 void print_mem_dat(memoria_dados* imp_dados);
+void salva_dat(memoria_dados* mem_dados);
 void inicializa_reg(banco_registradores* banReg);
+void print_banco_reg(banco_registradores* banReg);
+void print_complete(memoria_instrucao* mem_inst, memoria_dados* mem_dados, banco_registradores* banReg);
 int separa_bits(char *b, int ini, int nBits);
 int bits_imm(char *b);
 int bits_jump(char *b);
 sinais decoder(instrucao *inst);
-void executa_programa(memoria_instrucao* mem_inst);
+int ula(int A, int B, int controle);
+void executa_programa(memoria_instrucao* mem_inst, banco_registradores* banReg, memoria_dados* mem_dados);
 
 #endif

@@ -70,7 +70,7 @@ void carrega_mem (memoria_instrucao* mem_inst){
 
 void print_mem_inst(memoria_instrucao* imp_inst){
    printf("\n+-----+------------------+\n");
-   printf("| PC  | Binario          |\n");
+   printf("| PC  | Binario          |");
    printf("\n+-----+------------------+\n");
 
 
@@ -78,6 +78,6 @@ void print_mem_inst(memoria_instrucao* imp_inst){
        instrucao *inst = &imp_inst->inst[i];
        printf("| %3d | %-16s |\n", i, inst -> inst_bin);
    }
-   printf("\n+-----+------------------+\n");
+   printf("+-----+------------------+\n");
    printf("Total: %d instrucoes\n", imp_inst->tamanho);
 }

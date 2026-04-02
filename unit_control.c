@@ -25,6 +25,14 @@ sinais decoder(instrucao *inst) {
             s.esc_mem = 0;
             s.branch = 0;
             s.jump = 0;
+
+            switch(inst->funct){
+                case 0: s.controle_ula = 0; break; //ADD
+                case 1: s.controle_ula = 1; break; //SUB
+                case 2: s.controle_ula = 2; break; //AND
+                case 3: s.controle_ula = 3; break; //OR
+                default: printf("Funct invalido\n"); break;
+            }
         break;
         case 2: 
             // Tipo J
@@ -71,7 +79,7 @@ sinais decoder(instrucao *inst) {
             s.esc_mem = 0;
             s.branch = 1; // desvio
             s.jump = 0;
-            s.controle_ula = 2; // subtracao
+            s.controle_ula = 1; // subtracao
         break;
         case 11: // Tipo I - Lw
             inst->type_inst = 2;
@@ -109,4 +117,5 @@ sinais decoder(instrucao *inst) {
             inst->type_inst = 3;
         break;
     }
+    return s;
 }
