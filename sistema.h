@@ -58,5 +58,7 @@ int bits_jump(char *b);
 sinais decoder(instrucao *inst);
 int ula(int A, int B, int controle);
 void executa_programa(memoria_instrucao* mem_inst, banco_registradores* banReg, memoria_dados* mem_dados);
+void disassembla(instrucao *inst, char *buffer, int size);
+void salva_asm(memoria_instrucao* mem_inst, memoria_dados* mem_dados);
 
 #endif

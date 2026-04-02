@@ -49,7 +49,7 @@ int main(){
                 print_complete(mem_inst, mem_dados, banReg);
             break;
             case 6:
-            // .asm
+                salva_asm(mem_inst, mem_dados);
             break;
             case 7:
                 salva_dat(mem_dados);

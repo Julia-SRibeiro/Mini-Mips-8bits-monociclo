@@ -50,7 +50,7 @@ void carrega_mem (memoria_instrucao* mem_inst){
             }
         }
         if (valido == 0) {
-            printf("Linha %d ignorada. Caracter invalido %s\n", linha);
+            printf("Linha %d ignorada. Caracter invalido %s\n", linha, bits);
             printf("%d: %s", linha, bits);
             continue;
         }
@@ -80,4 +80,55 @@ void print_mem_inst(memoria_instrucao* imp_inst){
    }
    printf("+-----+------------------+\n");
    printf("Total: %d instrucoes\n", imp_inst->tamanho);
+}
+
+void disassembla(instrucao *inst, char *buffer, int size) {
+    // Primeiro, rodamos o decoder para garantir que os campos rs, rt, rd, etc., estejam preenchidos
+    decoder(inst); 
+
+    switch (inst->opcode) {
+        case 0: // Tipo R
+            switch (inst->funct) {
+                case 0: snprintf(buffer, size, "add R%d, R%d, R%d", inst->rd, inst->rs, inst->rt); break;
+                case 1: snprintf(buffer, size, "sub R%d, R%d, R%d", inst->rd, inst->rs, inst->rt); break;
+                case 2: snprintf(buffer, size, "and R%d, R%d, R%d", inst->rd, inst->rs, inst->rt); break;
+                case 3: snprintf(buffer, size, "or  R%d, R%d, R%d", inst->rd, inst->rs, inst->rt); break;
+                default: snprintf(buffer, size, "unknown R"); break;
+            }
+            break;
+        case 2:  snprintf(buffer, size, "j %d", inst->addr); break;
+        case 4:  snprintf(buffer, size, "addi R%d, R%d, %d", inst->rt, inst->rs, inst->imm); break;
+        case 8:  snprintf(buffer, size, "beq R%d, R%d, %d", inst->rs, inst->rt, inst->imm); break;
+        case 11: snprintf(buffer, size, "lw R%d, %d(R%d)", inst->rt, inst->imm, inst->rs); break;
+        case 15: snprintf(buffer, size, "sw R%d, %d(R%d)", inst->rt, inst->imm, inst->rs); break;
+        default: snprintf(buffer, size, "data %s", inst->inst_bin); break;
+    }
+}
+
+void salva_asm(memoria_instrucao* mem_inst, memoria_dados* mem_dados) {
+    if (mem_inst->inst == NULL || mem_inst->tamanho == 0) {
+        printf("Erro: Memoria de instrucoes vazia.\n");
+        return;
+    }
+
+    char arq[50];
+    printf("Nome do arquivo de saida .asm: ");
+    limpa_buffer();
+    scanf("%s", arq);
+
+    FILE *f = fopen(arq, "w");
+    if (!f) {
+        printf("Erro ao criar arquivo.\n");
+        return;
+    }
+
+    for (int i = 0; i < mem_inst->tamanho; i++) {
+        char linha_asm[64];
+        disassembla(&mem_inst->inst[i], linha_asm, sizeof(linha_asm));
+        
+        fprintf(f, "    %-20s # PC[%d]: %s\n", linha_asm, i, mem_inst->inst[i].inst_bin);
+    }
+
+    fclose(f);
+    printf("Arquivo '%s' salvo com sucesso!\n", arq);
 }
