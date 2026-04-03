@@ -8,14 +8,14 @@ void inicializa_reg(banco_registradores* banReg) {
     banReg->reg[i]=0;
     }
 
-    banReg->NOME_REG[0] = "R0";
-    banReg->NOME_REG[1] = "R1";
-    banReg->NOME_REG[2] = "R2";
-    banReg->NOME_REG[3] = "R3";
-    banReg->NOME_REG[4] = "R4";
-    banReg->NOME_REG[5] = "R5";
-    banReg->NOME_REG[6] = "R6";
-    banReg->NOME_REG[7] = "R7";
+    banReg->NOME_REG[0] = "$t0";
+    banReg->NOME_REG[1] = "$t1";
+    banReg->NOME_REG[2] = "$t2";
+    banReg->NOME_REG[3] = "$t3";
+    banReg->NOME_REG[4] = "$t4";
+    banReg->NOME_REG[5] = "$t5";
+    banReg->NOME_REG[6] = "$t6";
+    banReg->NOME_REG[7] = "$t7";
 }
 
 void print_banco_reg(banco_registradores* banReg){
