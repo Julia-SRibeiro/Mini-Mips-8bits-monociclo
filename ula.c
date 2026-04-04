@@ -8,25 +8,20 @@ int ula(int A, int B, int controle){
 
     switch(controle){
         case 0: //add
-        resultado = A+B;
+            resultado = A+B;
         break;
-
-        case 1:
-        resultado = A & B;
+        case 1: //sub
+            resultado = A-B;
         break;
-
-        case 2: //sub
-        resultado = A-B;
+        case 2: //and
+            resultado = A & B;
         break;
-
         case 3: //or
-        resultado = A|B;
+            resultado = A|B;
         break;
-
         default: 
             printf("Operacao nao implementada\n");
         break;
-
     }
     return resultado;
 }

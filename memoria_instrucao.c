@@ -98,7 +98,7 @@ void disassembla(instrucao *inst, char *buffer, int size) {
             break;
         case 2:  snprintf(buffer, size, "j %d", inst->addr); break;
         case 4:  snprintf(buffer, size, "addi $t%d, $t%d, %d", inst->rt, inst->rs, inst->imm); break;
-        case 8:  snprintf(buffer, size, "beq $t%d, $t%d, %d", inst->rs, inst->rt, inst->imm); break;
+        case 8:  snprintf(buffer, size, "beq $t%d, $t%d, %d", inst->rt, inst->rs, inst->imm); break;
         case 11: snprintf(buffer, size, "lw $t%d, %d($t%d)", inst->rt, inst->imm, inst->rs); break;
         case 15: snprintf(buffer, size, "sw $t%d, %d($t%d)", inst->rt, inst->imm, inst->rs); break;
         default: snprintf(buffer, size, "data %s", inst->inst_bin); break;
@@ -121,7 +121,7 @@ void salva_asm(memoria_instrucao* mem_inst, memoria_dados* mem_dados) {
         printf("Erro ao criar arquivo.\n");
         return;
     }
-
+    fprintf(f, ".text\nmain:\n");
     for (int i = 0; i < mem_inst->tamanho; i++) {
         char linha_asm[64];
         disassembla(&mem_inst->inst[i], linha_asm, sizeof(linha_asm));

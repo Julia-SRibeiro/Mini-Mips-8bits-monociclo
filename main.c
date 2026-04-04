@@ -95,9 +95,10 @@ int separa_bits(char *b, int ini, int nBits) {
     }
     return n;
 }
-int bits_imm(char *b) {
-    int val = separa_bits(b, 10, 6);
-    return (val << 2) >> 2;
+int bits_imm(char *b, int ini, int nBits) {
+    int val = separa_bits(b, ini, nBits);
+    signed char sinal = (signed char)(val << 2);
+    return (int)(sinal >> 2);
 }
 int bits_jump(char *b) {
     int val = separa_bits(b, 4, 12);
@@ -124,66 +125,75 @@ void print_complete(memoria_instrucao* mem_inst, memoria_dados* mem_dados, banco
 }
 
 void executa_programa(memoria_instrucao* mem_inst, banco_registradores* banReg, memoria_dados* mem_dados) {
-        if (mem_inst ->inst == NULL || mem_inst -> tamanho == 0) {
-    printf("Nenhuma instrucao carregada.\n");
-            return;
-        }
+    if (mem_inst ->inst == NULL || mem_inst -> tamanho == 0) {
+        printf("Nenhuma instrucao carregada.\n");
+        return;
+    }
         
     int PC=0;
+    int ciclos = 0;
+     while(PC >= 0 && PC < mem_inst-> tamanho && ciclos < CICLOS_MAX){
+        instrucao *inst = &mem_inst->inst[PC];
 
-    while(PC < (mem_inst->tamanho)) {
-    printf("PC = %d\n", PC);
+        //decode
+        sinais s = decoder(inst);
+        printf("PC = %d\n", PC);
+        //le registradores
+        int dado_rs = (int)banReg->reg[inst->rs];
+        int dado_rt = (int)banReg->reg[inst->rt];
 
-    instrucao *inst = &mem_inst->inst[PC];
-    sinais s = decoder(inst);
-    int A = banReg->reg[inst->rs];
-    int B;
+        int operando_B = (s.ula_fonte == 1) ? inst->imm : dado_rt;
+        int resultado_ula = ula(dado_rs, operando_B, s.controle_ula);
 
-    if(s.ula_fonte == 1) //verifica se vai usar imediato
-        B = inst->imm;
-    else
-        B = banReg->reg[inst->rt];
-        
-    int resultado = ula(A, B, s.controle_ula); //chama a ula
+        int dado_lido_mem = 0;
 
-    if(s.esc_mem == 1){ //SW
-        if(resultado >= 0 && resultado < MAX)
-        mem_dados->dados[resultado] = banReg->reg[inst->rt];
-        
-        else
-            printf("Endereco invalido: %d\n", resultado);
+        if (s.esc_mem == 1) { // instrução SW
+            if (resultado_ula >= 0 && resultado_ula < MAX) {
+                mem_dados->dados[resultado_ula] = dado_rt;
+            } else {
+                printf("Endereco de memoria invalido (SW): %d\n", resultado_ula);
+            }
+        }
+
+        if (s.mem_para_reg == 1) { //instrução LW
+            if (resultado_ula >= 0 && resultado_ula < MAX) {
+                dado_lido_mem = mem_dados->dados[resultado_ula];
+            } else {
+                printf("[ERRO] Endereco de memoria invalido (LW): %d\n", resultado_ula);
+            }
+        }
+
+        //escrita no Banco de Registradores (Write Back)
+        if (s.esc_reg == 1) {
+            //define o destino: RD (Tipo R) ou RT (Tipo I)
+            int reg_destino = (s.reg_destino == 1) ? inst->rd : inst->rt;
+           
+            //se for LW, o dado vem da memória. Caso contrário, vem da ULA.
+            int valor_final = (s.mem_para_reg == 1) ? dado_lido_mem : resultado_ula;
+           
+            banReg->reg[reg_destino] = (char)valor_final;
+        }
+
+        //atualização do PC (Controle de Fluxo)
+        int proximo_PC = PC + 1;
+
+        //BEQ: Se os valores forem iguais, a subtração na ULA resulta em 0
+        if (s.branch == 1 && resultado_ula == 0) {
+            proximo_PC = PC + 1 + inst->imm;
+        }
+
+        //Jump
+        if (s.jump == 1) {
+            proximo_PC = inst->addr;
+        }
+
+        PC = proximo_PC;
+        ciclos++;
     }
 
-    if(s.mem_para_reg == 1){ //LW
-        if(resultado >=0 && resultado < MAX)
-            banReg->reg[inst->rt] = mem_dados->dados[resultado];
-            
-        else
-            printf("Endereco invalido: %d\n", resultado);
+    if (ciclos >= CICLOS_MAX) {
+        printf("\nExecucao interrompida pelo limite de ciclos (possivel loop infinito).\n");
+    } else {
+        printf("\nExecucao finalizada com sucesso em %d ciclos.\n", ciclos);
     }
-
-
-    else if(s.esc_reg == 1){  //R e ADDI
-        int destino;
-
-        if(s.reg_destino == 1)
-            destino = inst->rd;
-        else
-            destino = inst->rt;
-        
-        banReg->reg[destino] = resultado;
-    }
-
-    if(s.branch == 1 && resultado == 0){ //BEQ
-        PC = PC + inst->imm;
-        continue;
-    }
-    if(s.jump == 1){ //JUMP
-        PC = inst->addr;
-        continue;
-    }
-        
-    PC++;
-    }
-    printf("Fim do programa.\n");
 };

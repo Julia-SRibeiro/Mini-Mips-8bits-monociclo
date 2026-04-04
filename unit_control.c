@@ -53,7 +53,7 @@ sinais decoder(instrucao *inst) {
             inst->type_inst = 2;
             inst->rs = separa_bits(b, 4, 3);
             inst->rt = separa_bits(b, 7, 3);
-            inst->imm = bits_imm(b);
+            inst->imm = bits_imm(b, 10, 6);
             inst->rd = inst->funct = inst->addr = 0;
 
             s.reg_destino = 0; // destino = rt
@@ -69,7 +69,7 @@ sinais decoder(instrucao *inst) {
             inst->type_inst = 2;
             inst->rs = separa_bits(b, 4, 3);
             inst->rt = separa_bits(b, 7, 3);
-            inst->imm = bits_imm(b);
+            inst->imm = bits_imm(b, 10, 6);
             inst->rd = inst->funct = inst->addr = 0;
 
             s.reg_destino = 0; // destino = rt
@@ -85,7 +85,7 @@ sinais decoder(instrucao *inst) {
             inst->type_inst = 2;
             inst->rs = separa_bits(b, 4, 3);
             inst->rt = separa_bits(b, 7, 3);
-            inst->imm = bits_imm(b);
+            inst->imm = bits_imm(b, 10, 6);
             inst->rd = inst->funct = inst->addr = 0;
 
             s.reg_destino = 0; // destino = rt
@@ -101,7 +101,7 @@ sinais decoder(instrucao *inst) {
             inst->type_inst = 2;
             inst->rs = separa_bits(b, 4, 3);
             inst->rt = separa_bits(b, 7, 3);
-            inst->imm = bits_imm(b);
+            inst->imm = bits_imm(b, 10, 6);
             inst->rd = inst->funct = inst->addr = 0;
 
             s.reg_destino = 0; // destino = rt
