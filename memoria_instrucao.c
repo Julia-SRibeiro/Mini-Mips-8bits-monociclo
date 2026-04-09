@@ -3,7 +3,7 @@
 #include <string.h>
 #include "sistema.h"
 
-void carrega_mem (memoria_instrucao* mem_inst){
+void carrega_mem (CPU *cpu){
     char arq[50];
 
     printf("Nome do arquivo .mem: ");
@@ -17,19 +17,19 @@ void carrega_mem (memoria_instrucao* mem_inst){
         return;
     }
 
-    if (mem_inst->inst != NULL) {
-        free(mem_inst->inst);
+    if (cpu->mem_inst->inst != NULL) {
+        free(cpu->mem_inst->inst);
     }
 
     // Alocacao de memoria (256 x tamanho do tipo instrucao)
-    mem_inst -> inst = (instrucao*) malloc(sizeof(instrucao) * MAX);
-    if (mem_inst->inst == NULL) {
+    cpu->mem_inst->inst = (instrucao*) malloc(sizeof(instrucao) * MAX_MEM);
+    if (cpu->mem_inst->inst == NULL) {
         printf("Erro ao alocar memoria.\n");
         return;
     }
 
     // Verifica arquivo.mem e salva na memoria de instrucoes
-    mem_inst -> tamanho = 0;
+    cpu->mem_inst->tamanho = 0;
     char bits[20];
     int linha = 0;
     while (fscanf (arquivo, "%s", bits) == 1){
@@ -55,58 +55,58 @@ void carrega_mem (memoria_instrucao* mem_inst){
             continue;
         }
     
-        if (mem_inst -> tamanho >= MAX){
+        if (cpu->mem_inst -> tamanho >= MAX_MEM){
             printf("Memoria cheia!");
             break;
         }
 
-        strcpy(mem_inst->inst[mem_inst->tamanho].inst_bin, bits);
-        mem_inst -> tamanho++;
+        strcpy(cpu->mem_inst->inst[cpu->mem_inst->tamanho].inst_bin, bits);
+        cpu->mem_inst->tamanho++;
     }
 
-    printf("%d instrucoes carregadas.\n", mem_inst->tamanho);
+    printf("%d instrucoes carregadas.\n", MAX_MEM);
     fclose(arquivo);
 }
 
-void print_mem_inst(memoria_instrucao* imp_inst){
-   printf("\n+-----+------------------+\n");
-   printf("| PC  | Binario          |");
-   printf("\n+-----+------------------+\n");
+void print_mem_inst(CPU *cpu){
+   printf("\n+------+------------------+\n");
+   printf("| Addr | Binario          |");
+   printf("\n+------+------------------+\n");
 
 
-   for (int i = 0; i < imp_inst -> tamanho; i++){
-       instrucao *inst = &imp_inst->inst[i];
-       printf("| %3d | %-16s |\n", i, inst -> inst_bin);
+   for (int i = 0; i < MAX_MEM; i++){
+       instrucao *inst = &cpu->mem_inst->inst[i];
+       printf("| %4d | %-16s |\n", i, inst -> inst_bin);
    }
-   printf("+-----+------------------+\n");
-   printf("Total: %d instrucoes\n", imp_inst->tamanho);
+   printf("+------+------------------+\n");
+   printf("Total: %d instrucoes\n", cpu->mem_inst->tamanho);
 }
 
-void disassembla(instrucao *inst, char *buffer, int size) {
-    // Primeiro, rodamos o decoder para garantir que os campos rs, rt, rd, etc., estejam preenchidos
+void disassembla(instrucao *inst, char *buffer) {
+    
     decoder(inst); 
 
     switch (inst->opcode) {
         case 0: // Tipo R
             switch (inst->funct) {
-                case 0: snprintf(buffer, size, "add $t%d, $t%d, $t%d", inst->rd, inst->rs, inst->rt); break;
-                case 1: snprintf(buffer, size, "sub $t%d, $t%d, $t%d", inst->rd, inst->rs, inst->rt); break;
-                case 2: snprintf(buffer, size, "and $t%d, $t%d, $t%d", inst->rd, inst->rs, inst->rt); break;
-                case 3: snprintf(buffer, size, "or  $t%d, $t%d, $t%d", inst->rd, inst->rs, inst->rt); break;
-                default: snprintf(buffer, size, "unknown R"); break;
+                case 0: sprintf(buffer, "add $r%d, $r%d, $r%d", inst->rd, inst->rs, inst->rt); break;
+                case 1: sprintf(buffer, "sub $r%d, $r%d, $r%d", inst->rd, inst->rs, inst->rt); break;
+                case 2: sprintf(buffer, "and $r%d, $r%d, $r%d", inst->rd, inst->rs, inst->rt); break;
+                case 3: sprintf(buffer, "or  $r%d, $r%d, $r%d", inst->rd, inst->rs, inst->rt); break;
+                default: sprintf(buffer, "Instrução desconhecida"); break;
             }
             break;
-        case 2:  snprintf(buffer, size, "j %d", inst->addr); break;
-        case 4:  snprintf(buffer, size, "addi $t%d, $t%d, %d", inst->rt, inst->rs, inst->imm); break;
-        case 8:  snprintf(buffer, size, "beq $t%d, $t%d, %d", inst->rt, inst->rs, inst->imm); break;
-        case 11: snprintf(buffer, size, "lw $t%d, %d($t%d)", inst->rt, inst->imm, inst->rs); break;
-        case 15: snprintf(buffer, size, "sw $t%d, %d($t%d)", inst->rt, inst->imm, inst->rs); break;
-        default: snprintf(buffer, size, "data %s", inst->inst_bin); break;
+        case 2:  sprintf(buffer, "j %d", inst->addr); break;
+        case 4:  sprintf(buffer, "addi $r%d, $r%d, %d", inst->rt, inst->rs, inst->imm); break;
+        case 8:  sprintf(buffer, "beq $r%d, $r%d, %d", inst->rt, inst->rs, inst->imm); break;
+        case 11: sprintf(buffer, "lw $r%d, %d($%d)", inst->rt, inst->imm, inst->rs); break;
+        case 15: sprintf(buffer, "sw $r%d, %d($%d)", inst->rt, inst->imm, inst->rs); break;
+        default: sprintf(buffer, "data %s", inst->inst_bin); break;
     }
 }
 
-void salva_asm(memoria_instrucao* mem_inst, memoria_dados* mem_dados) {
-    if (mem_inst->inst == NULL || mem_inst->tamanho == 0) {
+void salva_asm(CPU *cpu) {
+    if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
         printf("Erro: Memoria de instrucoes vazia.\n");
         return;
     }
@@ -121,10 +121,10 @@ void salva_asm(memoria_instrucao* mem_inst, memoria_dados* mem_dados) {
         printf("Erro ao criar arquivo.\n");
         return;
     }
-    fprintf(f, ".text\nmain:\n");
-    for (int i = 0; i < mem_inst->tamanho; i++) {
+    fprintf(f, "main:\n");
+    for (int i = 0; i < cpu->mem_inst->tamanho; i++) {
         char linha_asm[64];
-        disassembla(&mem_inst->inst[i], linha_asm, sizeof(linha_asm));
+        disassembla(&cpu->mem_inst->inst[i], linha_asm);
         fprintf(f, "    %s \n", linha_asm);
     }
 

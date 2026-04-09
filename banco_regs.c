@@ -3,23 +3,23 @@
 #include <string.h>
 #include "sistema.h"
 
-void inicializa_reg(banco_registradores* banReg) {
-    for (int i=0; i<NUM_REG; i++) {
-    banReg->reg[i]=0;
+void inicializa_reg(CPU *cpu) {
+    for (int i=0; i<MAX_REG; i++) {
+    cpu->banco_regs->reg[i]=0;
     }
 
-    banReg->NOME_REG[0] = "$t0";
-    banReg->NOME_REG[1] = "$t1";
-    banReg->NOME_REG[2] = "$t2";
-    banReg->NOME_REG[3] = "$t3";
-    banReg->NOME_REG[4] = "$t4";
-    banReg->NOME_REG[5] = "$t5";
-    banReg->NOME_REG[6] = "$t6";
-    banReg->NOME_REG[7] = "$t7";
+    cpu->banco_regs->NOME_REG[0] = "$0";
+    cpu->banco_regs->NOME_REG[1] = "$r1";
+    cpu->banco_regs->NOME_REG[2] = "$r2";
+    cpu->banco_regs->NOME_REG[3] = "$r3";
+    cpu->banco_regs->NOME_REG[4] = "$r4";
+    cpu->banco_regs->NOME_REG[5] = "$r5";
+    cpu->banco_regs->NOME_REG[6] = "$r6";
+    cpu->banco_regs->NOME_REG[7] = "$r7";
 }
 
-void print_banco_reg(banco_registradores* banReg){
-        if (banReg == NULL) {
+void print_banco_reg(CPU *cpu){
+        if (cpu->banco_regs->reg == NULL) {
         printf("Banco de registradores nao inicializado.\n");
         return;
     }
@@ -29,8 +29,8 @@ void print_banco_reg(banco_registradores* banReg){
     printf("| Reg  |  Valor |\n");
     printf("+------+--------+\n");
 
-    for (int i = 0; i < NUM_REG; i++) {
-        printf("| %4s | %6d |\n", banReg->NOME_REG[i], banReg->reg[i]);
+    for (int i = 0; i < MAX_REG; i++) {
+        printf("| %4s | %6d |\n", cpu->banco_regs->NOME_REG[i], cpu->banco_regs->reg[i]);
     }
 
     printf("+------+--------+\n");

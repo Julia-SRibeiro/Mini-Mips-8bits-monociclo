@@ -6,14 +6,16 @@
 int main(){ 
     int menu;
 
-    memoria_instrucao* mem_inst = (memoria_instrucao*) malloc(sizeof(memoria_instrucao));
-    memoria_dados* mem_dados = (memoria_dados*) malloc(sizeof(memoria_dados));
-    banco_registradores* banReg = malloc(sizeof(banco_registradores));
+    CPU *cpu = (CPU*) malloc(sizeof(CPU));
+    cpu->mem_inst = (memoria_instrucao*) malloc(sizeof(memoria_instrucao));
+    cpu->mem_dados = (memoria_dados*) malloc(sizeof(memoria_dados));
+    cpu->banco_regs = (banco_registradores*) malloc(sizeof(banco_registradores));
+    cpu->historico = (salva_estado*) malloc(sizeof(salva_estado) * MAX_MEM);
     
-    inicializa_reg(banReg);
-
-    mem_inst->inst = NULL;
-    mem_dados->dados = NULL;
+    cpu->mem_inst->inst = NULL;
+    cpu->mem_dados->dados = NULL;
+    cpu->pc = cpu->ciclos = cpu->i_hist = 0;
+    inicializa_reg(cpu);
 
     do {
         printf("\nMENU\n");
@@ -33,35 +35,35 @@ int main(){
 
         switch (menu) {
             case 1:
-                carrega_mem (mem_inst);
+                carrega_mem (cpu);
             break;
             case 2:
-                carrega_dat (mem_dados);
+                carrega_dat (cpu);
             break;
             case 3:
-                print_mem_inst(mem_inst);
-                print_mem_dat(mem_dados);
+                print_mem_inst(cpu);
+                print_mem_dat(cpu);
             break;
             case 4:
-                print_banco_reg(banReg);
+                print_banco_reg(cpu);
             break;
             case 5:
-                print_complete(mem_inst, mem_dados, banReg);
+                print_complete(cpu);
             break;
             case 6:
-                salva_asm(mem_inst, mem_dados);
+                salva_asm(cpu);
             break;
             case 7:
-                salva_dat(mem_dados);
+                salva_dat(cpu);
             break;
             case 8:
-                executa_programa(mem_inst, banReg, mem_dados);
+                executa_programa(cpu);
             break;
             case 9:
-            // step
+                executa_instrucao(cpu);
             break;
             case 10:
-            //back step
+                volta_instrucao(cpu);
             break;
             case 0:
                 printf("Encerrando programa.");
@@ -72,11 +74,13 @@ int main(){
         }
     } while (menu !=0);
 
-    free(mem_inst->inst);
-    free(mem_inst);
-    free(mem_dados->dados);
-    free(mem_dados);
-    free(banReg);
+    free(cpu->mem_inst->inst);
+    free(cpu->mem_inst);
+    free(cpu->mem_dados->dados);
+    free(cpu->mem_dados);
+    free(cpu->banco_regs);
+    free(cpu->historico); 
+    free(cpu);
 
     return 0;
 }
@@ -105,100 +109,124 @@ int bits_jump(char *b) {
     return val & 0xFF;
 }
 
-void print_complete(memoria_instrucao* mem_inst, memoria_dados* mem_dados, banco_registradores* banReg){
+void print_complete(CPU *cpu){
     printf("\n=========== ESTADO DO SIMULADOR ===========\n");
 
     // Memória de instruções
     printf("\n--- Memoria de Instrucoes ---\n");
-    print_mem_inst(mem_inst);
+    print_mem_inst(cpu);
     printf("\n");
 
     // Memória de dados
     printf("\n--- Memoria de Dados ---\n");
-    print_mem_dat(mem_dados);
+    print_mem_dat(cpu);
     printf("\n");
 
     // Banco de registradores
     printf("\n--- Banco de Registradores ---\n");
-    print_banco_reg(banReg);
+    print_banco_reg(cpu);
 }
 
-void executa_programa(memoria_instrucao* mem_inst, banco_registradores* banReg, memoria_dados* mem_dados) {
-    if (mem_inst ->inst == NULL || mem_inst -> tamanho == 0) {
+void salvar_estado(CPU *cpu) {
+    if (cpu->i_hist < MAX_MEM) {
+        cpu->historico[cpu->i_hist].pc = cpu->pc;
+        memcpy(cpu->historico[cpu->i_hist].reg, cpu->banco_regs->reg, MAX_REG * sizeof(char));
+        memcpy(cpu->historico[cpu->i_hist].dados, cpu->mem_dados->dados, MAX_MEM * sizeof(int));
+        cpu->historico[cpu->i_hist].cont_r = cpu->cont_r;
+        cpu->historico[cpu->i_hist].cont_i = cpu->cont_i;
+        cpu->historico[cpu->i_hist].cont_j = cpu->cont_j;
+
+        cpu->i_hist++;
+    }
+}
+void executa_instrucao(CPU *cpu) {
+    if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
         printf("Nenhuma instrucao carregada.\n");
         return;
     }
-        
-    int PC=0;
-    int ciclos=0;
 
-    while(PC >= 0 && PC < mem_inst-> tamanho && ciclos < CICLOS_MAX){
-        instrucao *inst = &mem_inst->inst[PC];
+    instrucao *inst = &cpu->mem_inst->inst[cpu->pc];
+    salvar_estado(cpu);
+    sinais s = decoder(inst);
+    int proximo_PC=0;
+    printf("PC = %d\n", (cpu->pc));
 
-        //decode
-        sinais s = decoder(inst);
-        printf("PC = %d\n", PC);
-        //le registradores
-        int dado_rs = (int)banReg->reg[inst->rs];
-        int dado_rt = (int)banReg->reg[inst->rt];
+    // Le registradores
+    int dado_rs = (int)cpu->banco_regs->reg[inst->rs];
+    int operando_B;
+    if(s.ula_fonte == 1) {
+        operando_B = inst->imm; // imediato
+    }
+    else {
+        operando_B = (int)cpu->banco_regs->reg[inst->rt]; // registrador
+    }
 
-        int overflow=0;
-        int operando_B = (s.ula_fonte == 1) ? inst->imm : dado_rt;
-        int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow);
+    // Realiza operacao
+    int overflow;    
+    int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow);
+    if (overflow == 1){
+        printf("PC=%d | A=%d B=%d | Resultado=%d | Overflow=%d \n", cpu->pc, dado_rs, operando_B, resultado_ula, overflow);
+    }
 
-        if (overflow == 1){
-            printf("PC=%d | A=%d B=%d | Resultado=%d | Overflow=%d \n", PC, dado_rs, operando_B, resultado_ula, overflow);
-        }
-
+    // Atualiza PC
+    if (s.jump == 1) { //Jump
+        proximo_PC = inst->addr;
+    } else if (s.branch == 1 && overflow == 1) { //BEQ
+        proximo_PC = cpu->pc + 1 + inst->imm;
+    } else {
+        // Acessa memoria
         int dado_lido_mem = 0;
 
-        if (s.esc_mem == 1) { // instrução SW
-            if (resultado_ula >= 0 && resultado_ula < MAX) {
-                mem_dados->dados[resultado_ula] = dado_rt;
+        if (s.mem_para_reg == 1) { // LW
+            if (resultado_ula >= 0 && resultado_ula < MAX_MEM) {
+                dado_lido_mem = cpu->mem_dados->dados[resultado_ula];
+            } else {
+                printf("Endereco de memoria invalido (LW): %d\n", resultado_ula);
+            }
+        }
+
+        if (s.esc_mem == 1) { // SW
+            if (resultado_ula >= 0 && resultado_ula < MAX_MEM) {
+                cpu->mem_dados->dados[resultado_ula] = operando_B;
             } else {
                 printf("Endereco de memoria invalido (SW): %d\n", resultado_ula);
             }
         }
-
-        if (s.mem_para_reg == 1) { //instrução LW
-            if (resultado_ula >= 0 && resultado_ula < MAX) {
-                dado_lido_mem = mem_dados->dados[resultado_ula];
-            } else {
-                printf("[ERRO] Endereco de memoria invalido (LW): %d\n", resultado_ula);
-            }
-        }
-
-        //escrita no Banco de Registradores (Write Back)
-        if (s.esc_reg == 1) {
-            //define o destino: RD (Tipo R) ou RT (Tipo I)
+        if (s.esc_reg == 1) {// R e ADDI
             int reg_destino = (s.reg_destino == 1) ? inst->rd : inst->rt;
-           
-            //se for LW, o dado vem da memória. Caso contrário, vem da ULA.
             int valor_final = (s.mem_para_reg == 1) ? dado_lido_mem : resultado_ula;
-           
-            banReg->reg[reg_destino] = (char)valor_final;
+            cpu->banco_regs->reg[reg_destino] = (char)valor_final;
         }
-
-        //atualização do PC (Controle de Fluxo)
-        int proximo_PC = PC + 1;
-
-        //BEQ: Se os valores forem iguais, a subtração na ULA resulta em 0
-        if (s.branch == 1 && resultado_ula == 0) {
-            proximo_PC = PC + 1 + inst->imm;
-        }
-
-        //Jump
-        if (s.jump == 1) {
-            proximo_PC = inst->addr;
-        }
-
-        PC = proximo_PC;
-        ciclos++;
+        proximo_PC = cpu->pc + 1;
     }
+    cpu->pc = proximo_PC;
+    cpu->ciclos++;
+}
+void volta_instrucao(CPU *cpu) {
+    if(cpu->i_hist > 0) {
+        cpu->i_hist--;
+        cpu->ciclos--;
 
-    if (ciclos >= CICLOS_MAX) {
-        printf("\nExecucao interrompida pelo limite de ciclos (possivel loop infinito).\n");
+        cpu->pc = cpu->historico[cpu->i_hist].pc;
+        memcpy(cpu->banco_regs->reg, cpu->historico[cpu->i_hist].reg, sizeof(cpu->historico[cpu->i_hist].reg));
+        memcpy(cpu->mem_dados->dados, cpu->historico[cpu->i_hist].dados, sizeof(cpu->historico[cpu->i_hist].dados));
+        cpu->cont_i = cpu->historico[cpu->i_hist].cont_i;
+        cpu->cont_r = cpu->historico[cpu->i_hist].cont_r;
+        cpu->cont_j = cpu->historico[cpu->i_hist].cont_j;
+
+        printf("Instrucao desfeita\n"
+                "PC = %d\n", cpu->pc);
     } else {
-        printf("\nExecucao finalizada com sucesso em %d ciclos.\n", ciclos);
+        printf("Nao ha instrucoes anteriores. \n");
     }
+}
+void executa_programa(CPU *cpu) {
+    if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
+        printf("Nenhuma instrucao carregada.\n");
+        return;
+    }
+    while(cpu->ciclos < MAX_MEM) {
+        executa_instrucao(cpu);
+    }
+    printf("\nExecucao finalizada com sucesso em %d ciclos.\n", cpu->ciclos);
 };

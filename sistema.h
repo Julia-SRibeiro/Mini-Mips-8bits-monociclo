@@ -1,15 +1,13 @@
 #ifndef FUNCOES_H
 #define FUNCOES_H
 
-#define MAX 256
-#define NUM_REG 8
-#define CICLOS_MAX 22 /* limite anti-loop infinito */
+#define MAX_MEM 256
+#define MAX_REG 8
 
 // STRUCTs e ENUMs
 typedef enum {
     type_r, type_j, type_i, type_outros
 } classe_inst;
-
 typedef struct {
     classe_inst type_inst;
     char inst_bin[17];
@@ -17,18 +15,16 @@ typedef struct {
 } instrucao;
 
 typedef struct {
-    instrucao* inst; 
+    instrucao *inst; 
     int tamanho;
 } memoria_instrucao;
-
 typedef struct {
-    int* dados;
-    int tamanho; 
+    int *dados;
+    int tamanho;
 } memoria_dados;
-
 typedef struct {
-    char reg[NUM_REG];
-    char *NOME_REG[NUM_REG];
+    char reg[MAX_REG];
+    char *NOME_REG[MAX_REG];
 } banco_registradores;
 
 typedef struct {
@@ -42,23 +38,44 @@ typedef struct {
   int controle_ula; // ULA_ADD/SUB/AND/OR
 } sinais;
 
+typedef struct {
+  int pc;
+  char reg[MAX_REG];
+  int dados[MAX_MEM];
+  int cont_r, cont_i, cont_j, cont_total;
+} salva_estado;
+
+typedef struct {
+    int pc;
+    memoria_instrucao *mem_inst;
+    memoria_dados *mem_dados;
+    banco_registradores *banco_regs;
+    salva_estado *historico;
+    int cont_r, cont_i, cont_j, cont_total;
+    int i_hist;
+    int ciclos;
+} CPU;
+
 // FUNCTIONS
 void limpa_buffer();
-void carrega_mem(memoria_instrucao* mem_inst);
-void print_mem_inst(memoria_instrucao* imp_inst);
-void carrega_dat(memoria_dados* mem_dados);
-void print_mem_dat(memoria_dados* imp_dados);
-void salva_dat(memoria_dados* mem_dados);
-void inicializa_reg(banco_registradores* banReg);
-void print_banco_reg(banco_registradores* banReg);
-void print_complete(memoria_instrucao* mem_inst, memoria_dados* mem_dados, banco_registradores* banReg);
+void carrega_mem(CPU *cpu);
+void print_mem_inst(CPU *cpu);
+void carrega_dat(CPU *cpu);
+void print_mem_dat(CPU *cpu);
+void salva_dat(CPU *cpu);
+void inicializa_reg(CPU *cpu);
+void print_banco_reg(CPU *cpu);
+void print_complete(CPU *cpu);
 int separa_bits(char *b, int ini, int nBits);
 int bits_imm(char *b, int ini, int nBits);
 int bits_jump(char *b);
 sinais decoder(instrucao *inst);
 int ula(int A, int B, int controle, int* overflow);
-void executa_programa(memoria_instrucao* mem_inst, banco_registradores* banReg, memoria_dados* mem_dados);
-void disassembla(instrucao *inst, char *buffer, int size);
-void salva_asm(memoria_instrucao* mem_inst, memoria_dados* mem_dados);
+void salvar_estado(CPU *cpu);
+void executa_instrucao(CPU *cpu);
+void volta_instrucao(CPU *cpu);
+void executa_programa(CPU *cpu);
+void disassembla(instrucao *inst, char *buffer);
+void salva_asm(CPU *cpu);
 
 #endif

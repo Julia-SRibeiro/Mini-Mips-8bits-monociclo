@@ -5,6 +5,7 @@
 
 int ula(int A, int B, int controle, int *overflow){
     int resultado=0;
+    *overflow=0;
 
     switch(controle){
         case 0: //add
