@@ -19,8 +19,7 @@ void inicializa_reg(banco_registradores* banReg) {
 }
 
 void print_banco_reg(banco_registradores* banReg){
-
-    if (banReg == NULL) {
+        if (banReg == NULL) {
         printf("Banco de registradores nao inicializado.\n");
         return;
     }

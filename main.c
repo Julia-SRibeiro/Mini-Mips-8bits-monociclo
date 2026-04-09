@@ -106,7 +106,7 @@ int bits_jump(char *b) {
 }
 
 void print_complete(memoria_instrucao* mem_inst, memoria_dados* mem_dados, banco_registradores* banReg){
- printf("\n=========== ESTADO DO SIMULADOR ===========\n");
+    printf("\n=========== ESTADO DO SIMULADOR ===========\n");
 
     // Memória de instruções
     printf("\n--- Memoria de Instrucoes ---\n");
@@ -121,7 +121,6 @@ void print_complete(memoria_instrucao* mem_inst, memoria_dados* mem_dados, banco
     // Banco de registradores
     printf("\n--- Banco de Registradores ---\n");
     print_banco_reg(banReg);
-
 }
 
 void executa_programa(memoria_instrucao* mem_inst, banco_registradores* banReg, memoria_dados* mem_dados) {
@@ -131,8 +130,9 @@ void executa_programa(memoria_instrucao* mem_inst, banco_registradores* banReg, 
     }
         
     int PC=0;
-    int ciclos = 0;
-     while(PC >= 0 && PC < mem_inst-> tamanho && ciclos < CICLOS_MAX){
+    int ciclos=0;
+
+    while(PC >= 0 && PC < mem_inst-> tamanho && ciclos < CICLOS_MAX){
         instrucao *inst = &mem_inst->inst[PC];
 
         //decode
@@ -142,8 +142,13 @@ void executa_programa(memoria_instrucao* mem_inst, banco_registradores* banReg, 
         int dado_rs = (int)banReg->reg[inst->rs];
         int dado_rt = (int)banReg->reg[inst->rt];
 
+        int overflow=0;
         int operando_B = (s.ula_fonte == 1) ? inst->imm : dado_rt;
-        int resultado_ula = ula(dado_rs, operando_B, s.controle_ula);
+        int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow);
+
+        if (overflow == 1){
+            printf("PC=%d | A=%d B=%d | Resultado=%d | Overflow=%d \n", PC, dado_rs, operando_B, resultado_ula, overflow);
+        }
 
         int dado_lido_mem = 0;
 
