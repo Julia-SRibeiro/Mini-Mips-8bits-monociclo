@@ -3,6 +3,8 @@
 #include <string.h>
 #include "sistema.h"
 
+estatisticas est;
+
 int main(){ 
     int menu;
 
@@ -151,6 +153,42 @@ void executa_instrucao(CPU *cpu) {
     int proximo_PC=0;
     printf("PC = %d\n", (cpu->pc));
 
+    // Contagem para gerar estatisticas, verificar onde fica melhor... posso reaproveitar codigo e colocar no UC mas n é a função dela
+
+    if (inst->opcode == 0) {
+    est.total_r++;
+
+    switch(inst->funct){
+        case 0: est.add++; break;
+        case 1: est.sub++; break;
+        case 2: est.and_op++; break;
+        case 3: est.or_op++; break;
+        }
+    }
+    else if (inst->opcode == 4) {
+    est.total_i++;
+    est.addi++;
+    }
+    else if (inst->opcode == 8) {
+    est.total_i++;
+    est.beq++;
+    }
+    else if (inst->opcode == 11) {
+    est.total_i++;
+    est.lw++;
+    }
+    else if (inst->opcode == 15) {
+    est.total_i++;
+    est.sw++;
+    }
+    else if (inst->opcode == 2) {
+    est.total_j++;
+    est.jump++;
+    }
+
+    est.total_inst++;
+
+
     // Le registradores
     int dado_rs = (int)cpu->banco_regs->reg[inst->rs];
     int operando_B;
@@ -221,6 +259,8 @@ void volta_instrucao(CPU *cpu) {
     }
 }
 void executa_programa(CPU *cpu) {
+    est = (estatisticas){0};
+
     if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
         printf("Nenhuma instrucao carregada.\n");
         return;
@@ -229,4 +269,20 @@ void executa_programa(CPU *cpu) {
         executa_instrucao(cpu);
     }
     printf("\nExecucao finalizada com sucesso em %d ciclos.\n", cpu->ciclos);
+
+    
+    printf("\n===== ESTATISTICAS =====\n");
+    printf("\nTotal de instrucoes: %d\n", est.total_inst);
+    printf("\nTipo R: %d\n", est.total_r);
+    printf("  ADD: %d\n", est.add);
+    printf("  SUB: %d\n", est.sub);
+    printf("  AND: %d\n", est.and_op);
+    printf("  OR : %d\n", est.or_op);
+    printf("\nTipo I: %d\n", est.total_i);
+    printf("  ADDI: %d\n", est.addi);
+    printf("  BEQ : %d\n", est.beq);
+    printf("  LW  : %d\n", est.lw);
+    printf("  SW  : %d\n", est.sw);
+    printf("\nTipo J: %d\n", est.total_j);
+    printf("  JUMP: %d\n", est.jump);
 };

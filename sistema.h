@@ -56,6 +56,13 @@ typedef struct {
     int ciclos;
 } CPU;
 
+typedef struct {
+    int total_inst, add, sub, and_op, or_op;
+    int addi, sw, lw, beq, jump;
+    int total_r, total_i, total_j;
+} estatisticas;
+
+
 // FUNCTIONS
 void limpa_buffer();
 void carrega_mem(CPU *cpu);
