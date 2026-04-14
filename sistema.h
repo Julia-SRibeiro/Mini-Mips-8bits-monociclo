@@ -77,7 +77,7 @@ int separa_bits(char *b, int ini, int nBits);
 int bits_imm(char *b, int ini, int nBits);
 int bits_jump(char *b);
 sinais decoder(instrucao *inst);
-int ula(int A, int B, int controle, int* overflow);
+int ula(int A, int B, int controle, int* overflow,  int* flag_zero);
 void salvar_estado(CPU *cpu);
 void executa_instrucao(CPU *cpu);
 void volta_instrucao(CPU *cpu);

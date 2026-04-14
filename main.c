@@ -153,7 +153,8 @@ void executa_instrucao(CPU *cpu) {
     int proximo_PC=0;
     printf("PC = %d\n", (cpu->pc));
 
-    // Contagem para gerar estatisticas, verificar onde fica melhor... posso reaproveitar codigo e colocar no UC mas n é a função dela
+    // Contagem para gerar estatisticas, verificar onde fica melhor... posso reaproveitar codigo e colocar no UC9
+    
 
     if (inst->opcode == 0) {
     est.total_r++;
@@ -200,8 +201,13 @@ void executa_instrucao(CPU *cpu) {
     }
 
     // Realiza operacao
-    int overflow;    
-    int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow);
+    int overflow, flag_zero;
+    int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow, &flag_zero);
+
+    if(flag_zero == 1){
+        printf("PC=%d | A=%d B=%d | Resultado=%d | Flag=%d \n", cpu->pc, dado_rs, operando_B, resultado_ula, flag_zero);
+    }
+
     if (overflow == 1){
         printf("PC=%d | A=%d B=%d | Resultado=%d | Overflow=%d \n", cpu->pc, dado_rs, operando_B, resultado_ula, overflow);
     }
@@ -209,7 +215,7 @@ void executa_instrucao(CPU *cpu) {
     // Atualiza PC
     if (s.jump == 1) { //Jump
         proximo_PC = inst->addr;
-    } else if (s.branch == 1 && overflow == 1) { //BEQ
+    } else if (s.branch == 1 && flag_zero == 1) { //BEQ
         proximo_PC = cpu->pc + 1 + inst->imm;
     } else {
         // Acessa memoria
@@ -257,7 +263,8 @@ void volta_instrucao(CPU *cpu) {
     } else {
         printf("Nao ha instrucoes anteriores. \n");
     }
-}
+} 
+
 void executa_programa(CPU *cpu) {
     est = (estatisticas){0};
 
