@@ -1,10 +1,12 @@
 main:
-    add $r3, $r2, $r1 
-    add $r3, $r2, $r1 
-    addi $r4, $r0, 10 
-    sw $r2, 0($0) 
-    lw $r1, 4($0) 
-    beq $r2, $r0, 8 
-    beq $r5, $r0, 1 
-    beq $r2, $r3, 10 
-    j 1 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 
+    add $r0, $r0, $r0 

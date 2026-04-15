@@ -3,7 +3,6 @@
 #include <string.h>
 #include "sistema.h"
 
-estatisticas est;
 
 int main(){ 
     int menu;
@@ -62,8 +61,12 @@ int main(){
                 executa_programa(cpu);
             break;
             case 9:
+                if(cpu->ciclos == 0){
+                cpu->est = (estatisticas){0};
+                }
                 executa_instrucao(cpu);
-            break;
+                break;
+                 
             case 10:
                 volta_instrucao(cpu);
             break;
@@ -137,7 +140,7 @@ void salvar_estado(CPU *cpu) {
         cpu->historico[cpu->i_hist].cont_r = cpu->cont_r;
         cpu->historico[cpu->i_hist].cont_i = cpu->cont_i;
         cpu->historico[cpu->i_hist].cont_j = cpu->cont_j;
-
+        cpu->historico[cpu->i_hist].est = cpu->est;
         cpu->i_hist++;
     }
 }
@@ -149,46 +152,42 @@ void executa_instrucao(CPU *cpu) {
 
     instrucao *inst = &cpu->mem_inst->inst[cpu->pc];
     salvar_estado(cpu);
-    sinais s = decoder(inst);
+    sinais s = decoder(inst, cpu);
     int proximo_PC=0;
     printf("PC = %d\n", (cpu->pc));
 
-    // Contagem para gerar estatisticas, verificar onde fica melhor... posso reaproveitar codigo e colocar no UC9
-    
+    cpu->est.total_inst++;
 
-    if (inst->opcode == 0) {
-    est.total_r++;
+if (inst->opcode == 0) {
+    cpu->est.total_r++;
 
     switch(inst->funct){
-        case 0: est.add++; break;
-        case 1: est.sub++; break;
-        case 2: est.and_op++; break;
-        case 3: est.or_op++; break;
-        }
+        case 0: cpu->est.add++; break;
+        case 1: cpu->est.sub++; break;
+        case 2: cpu->est.and_op++; break;
+        case 3: cpu->est.or_op++; break;
     }
-    else if (inst->opcode == 4) {
-    est.total_i++;
-    est.addi++;
-    }
-    else if (inst->opcode == 8) {
-    est.total_i++;
-    est.beq++;
-    }
-    else if (inst->opcode == 11) {
-    est.total_i++;
-    est.lw++;
-    }
-    else if (inst->opcode == 15) {
-    est.total_i++;
-    est.sw++;
-    }
-    else if (inst->opcode == 2) {
-    est.total_j++;
-    est.jump++;
-    }
-
-    est.total_inst++;
-
+}
+else if (inst->opcode == 4) {
+    cpu->est.total_i++;
+    cpu->est.addi++;
+}
+else if (inst->opcode == 8) {
+    cpu->est.total_i++;
+    cpu->est.beq++;
+}
+else if (inst->opcode == 11) {
+    cpu->est.total_i++;
+    cpu->est.lw++;
+}
+else if (inst->opcode == 15) {
+    cpu->est.total_i++;
+    cpu->est.sw++;
+}
+else if (inst->opcode == 2) {
+    cpu->est.total_j++;
+    cpu->est.jump++;
+}
 
     // Le registradores
     int dado_rs = (int)cpu->banco_regs->reg[inst->rs];
@@ -204,7 +203,7 @@ void executa_instrucao(CPU *cpu) {
     int overflow, flag_zero;
     int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow, &flag_zero);
 
-    if(flag_zero == 1){
+      if(flag_zero == 1){
         printf("PC=%d | A=%d B=%d | Resultado=%d | Flag=%d \n", cpu->pc, dado_rs, operando_B, resultado_ula, flag_zero);
     }
 
@@ -257,6 +256,8 @@ void volta_instrucao(CPU *cpu) {
         cpu->cont_i = cpu->historico[cpu->i_hist].cont_i;
         cpu->cont_r = cpu->historico[cpu->i_hist].cont_r;
         cpu->cont_j = cpu->historico[cpu->i_hist].cont_j;
+        cpu->est = cpu->historico[cpu->i_hist].est;
+    
 
         printf("Instrucao desfeita\n"
                 "PC = %d\n", cpu->pc);
@@ -266,7 +267,6 @@ void volta_instrucao(CPU *cpu) {
 } 
 
 void executa_programa(CPU *cpu) {
-    est = (estatisticas){0};
 
     if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
         printf("Nenhuma instrucao carregada.\n");
@@ -279,17 +279,17 @@ void executa_programa(CPU *cpu) {
 
     
     printf("\n===== ESTATISTICAS =====\n");
-    printf("\nTotal de instrucoes: %d\n", est.total_inst);
-    printf("\nTipo R: %d\n", est.total_r);
-    printf("  ADD: %d\n", est.add);
-    printf("  SUB: %d\n", est.sub);
-    printf("  AND: %d\n", est.and_op);
-    printf("  OR : %d\n", est.or_op);
-    printf("\nTipo I: %d\n", est.total_i);
-    printf("  ADDI: %d\n", est.addi);
-    printf("  BEQ : %d\n", est.beq);
-    printf("  LW  : %d\n", est.lw);
-    printf("  SW  : %d\n", est.sw);
-    printf("\nTipo J: %d\n", est.total_j);
-    printf("  JUMP: %d\n", est.jump);
+    printf("\nTotal de instrucoes: %d\n", cpu->est.total_inst);
+    printf("\nTipo R: %d\n", cpu->est.total_r);
+    printf("  ADD: %d\n", cpu->est.add);
+    printf("  SUB: %d\n", cpu->est.sub);
+    printf("  AND: %d\n", cpu->est.and_op);
+    printf("  OR : %d\n", cpu->est.or_op);  
+    printf("\nTipo I: %d\n", cpu->est.total_i);
+    printf("  ADDI: %d\n", cpu->est.addi);
+    printf("  BEQ : %d\n", cpu->est.beq);
+    printf("  LW  : %d\n", cpu->est.lw);
+    printf("  SW  : %d\n", cpu->est.sw);
+    printf("\nTipo J: %d\n", cpu->est.total_j);
+    printf("  JUMP: %d\n", cpu->est.jump);
 };

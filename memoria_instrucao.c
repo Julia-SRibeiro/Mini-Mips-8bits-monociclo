@@ -84,8 +84,6 @@ void print_mem_inst(CPU *cpu){
 
 void disassembla(instrucao *inst, char *buffer) {
     
-    decoder(inst); 
-
     switch (inst->opcode) {
         case 0: // Tipo R
             switch (inst->funct) {
