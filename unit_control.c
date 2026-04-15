@@ -3,7 +3,7 @@
 #include <string.h>
 #include "sistema.h"
 
-sinais decoder(instrucao *inst) {
+sinais decoder(instrucao *inst, CPU *cpu) {
     char *b = inst->inst_bin;
     sinais s;
     inst->opcode = separa_bits(b, 0, 4);

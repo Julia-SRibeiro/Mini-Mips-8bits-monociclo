@@ -3,6 +3,7 @@
 #include <string.h>
 #include "sistema.h"
 
+
 int main(){ 
     int menu;
 
@@ -18,19 +19,21 @@ int main(){
     inicializa_reg(cpu);
 
     do {
-        printf("\nMENU\n");
-        printf("1. Carregar memoria de instrucoes (.mem)\n");
-        printf("2. Carregar memoria de Dados (.dat)\n");
-        printf("3. Imprimir memorias (instrucoes e dados)\n");
-        printf("4. Imprimir banco de registradores\n");
-        printf("5. Imprimir todo o simulador (registradores e memorias)\n");
-        printf("6. Salvar .asm\n");
-        printf("7. Salvar .dat\n");
-        printf("8. Executa Programa (run)\n");
-        printf("9. Executa uma instrucao (Step)\n");
-        printf("10. Volta uma instrucao (Back)\n");
-        printf("0. Sair\n");
-        printf("Digite uma opcao: ");
+        printf("\nMENU\n"
+            "1. Carregar memoria de instrucoes (.mem)\n"
+            "2. Carregar memoria de Dados (.dat)\n"
+            "3. Executa Programa (Run)\n"
+            "4. Executa uma instrucao (Step)\n"
+            "5. Volta uma instrucao (Back Step) \n"
+            "6. Ressetar programa (Reset)\n"
+            "7. Imprimir memorias (instrucoes e dados)\n"
+            "8. Imprimir banco de registradores\n"
+            "9. Imprimir todo o simulador (registradores e memorias)\n"
+            "10. Imprimir estatisticas de execucao\n"
+            "11. Salvar .dat\n"
+            "12. Salvar .asm\n"
+            "0. Sair\n"
+            "Digite uma opcao: ");
         scanf("%d", &menu);
 
         switch (menu) {
@@ -41,36 +44,45 @@ int main(){
                 carrega_dat (cpu);
             break;
             case 3:
+                executa_programa(cpu);
+            break;
+            case 4:
+                if(cpu->ciclos == 0){
+                    cpu->est = (estatisticas){0};
+                }
+                executa_instrucao(cpu);
+            break;
+            case 5:
+                volta_instrucao(cpu);
+            break;
+            case 6:
+                // Reset
+            break;
+            case 7:
                 print_mem_inst(cpu);
                 print_mem_dat(cpu);
             break;
-            case 4:
+            case 8:
                 print_banco_reg(cpu);
             break;
-            case 5:
+            case 9:
                 print_complete(cpu);
+                break;
+            case 10:
+                print_est(cpu);
             break;
-            case 6:
-                salva_asm(cpu);
-            break;
-            case 7:
+            case 11:
                 salva_dat(cpu);
             break;
-            case 8:
-                executa_programa(cpu);
-            break;
-            case 9:
-                executa_instrucao(cpu);
-            break;
-            case 10:
-                volta_instrucao(cpu);
+            case 12:
+                salva_asm(cpu);
             break;
             case 0:
-                printf("Encerrando programa.");
+                printf("Encerrando programa.\n");
             break;
             default:
                 printf("Numero invalido!");
-                break;
+            break;
         }
     } while (menu !=0);
 
@@ -126,6 +138,22 @@ void print_complete(CPU *cpu){
     printf("\n--- Banco de Registradores ---\n");
     print_banco_reg(cpu);
 }
+void print_est(CPU *cpu) {
+    printf("\n===== ESTATISTICAS =====\n");
+    printf("\nTotal de instrucoes: %d\n", cpu->est.total_inst);
+    printf("\nTipo R: %d\n", cpu->est.total_r);
+    printf("  ADD: %d\n", cpu->est.add);
+    printf("  SUB: %d\n", cpu->est.sub);
+    printf("  AND: %d\n", cpu->est.and_op);
+    printf("  OR : %d\n", cpu->est.or_op);  
+    printf("\nTipo I: %d\n", cpu->est.total_i);
+    printf("  ADDI: %d\n", cpu->est.addi);
+    printf("  BEQ : %d\n", cpu->est.beq);
+    printf("  LW  : %d\n", cpu->est.lw);
+    printf("  SW  : %d\n", cpu->est.sw);
+    printf("\nTipo J: %d\n", cpu->est.total_j);
+    printf("  JUMP: %d\n", cpu->est.jump);
+}
 
 void salvar_estado(CPU *cpu) {
     if (cpu->i_hist < MAX_MEM) {
@@ -135,7 +163,7 @@ void salvar_estado(CPU *cpu) {
         cpu->historico[cpu->i_hist].cont_r = cpu->cont_r;
         cpu->historico[cpu->i_hist].cont_i = cpu->cont_i;
         cpu->historico[cpu->i_hist].cont_j = cpu->cont_j;
-
+        cpu->historico[cpu->i_hist].est = cpu->est;
         cpu->i_hist++;
     }
 }
@@ -147,9 +175,42 @@ void executa_instrucao(CPU *cpu) {
 
     instrucao *inst = &cpu->mem_inst->inst[cpu->pc];
     salvar_estado(cpu);
-    sinais s = decoder(inst);
+    sinais s = decoder(inst, cpu);
     int proximo_PC=0;
     printf("PC = %d\n", (cpu->pc));
+
+    cpu->est.total_inst++;
+
+    if (inst->opcode == 0) {
+        cpu->est.total_r++;
+
+        switch(inst->funct){
+            case 0: cpu->est.add++; break;
+            case 1: cpu->est.sub++; break;
+            case 2: cpu->est.and_op++; break;
+            case 3: cpu->est.or_op++; break;
+        }
+    }
+    else if (inst->opcode == 4) {
+        cpu->est.total_i++;
+        cpu->est.addi++;
+    }
+    else if (inst->opcode == 8) {
+        cpu->est.total_i++;
+        cpu->est.beq++;
+    }
+    else if (inst->opcode == 11) {
+        cpu->est.total_i++;
+        cpu->est.lw++;
+    }
+    else if (inst->opcode == 15) {
+        cpu->est.total_i++;
+        cpu->est.sw++;
+    }
+    else if (inst->opcode == 2) {
+        cpu->est.total_j++;
+        cpu->est.jump++;
+    }
 
     // Le registradores
     int dado_rs = (int)cpu->banco_regs->reg[inst->rs];
@@ -162,8 +223,13 @@ void executa_instrucao(CPU *cpu) {
     }
 
     // Realiza operacao
-    int overflow;    
-    int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow);
+    int overflow, flag_zero;
+    int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow, &flag_zero);
+
+    if(flag_zero == 1){
+        printf("PC=%d | A=%d B=%d | Resultado=%d | Flag=%d \n", cpu->pc, dado_rs, operando_B, resultado_ula, flag_zero);
+    }
+
     if (overflow == 1){
         printf("PC=%d | A=%d B=%d | Resultado=%d | Overflow=%d \n", cpu->pc, dado_rs, operando_B, resultado_ula, overflow);
     }
@@ -171,9 +237,11 @@ void executa_instrucao(CPU *cpu) {
     // Atualiza PC
     if (s.jump == 1) { //Jump
         proximo_PC = inst->addr;
-    } else if (s.branch == 1 && overflow == 1) { //BEQ
+    } else if (s.branch == 1 && flag_zero == 1) { //BEQ
         proximo_PC = cpu->pc + 1 + inst->imm;
     } else {
+        proximo_PC = cpu->pc + 1;
+
         // Acessa memoria
         int dado_lido_mem = 0;
 
@@ -184,7 +252,6 @@ void executa_instrucao(CPU *cpu) {
                 printf("Endereco de memoria invalido (LW): %d\n", resultado_ula);
             }
         }
-
         if (s.esc_mem == 1) { // SW
             if (resultado_ula >= 0 && resultado_ula < MAX_MEM) {
                 cpu->mem_dados->dados[resultado_ula] = operando_B;
@@ -197,7 +264,6 @@ void executa_instrucao(CPU *cpu) {
             int valor_final = (s.mem_para_reg == 1) ? dado_lido_mem : resultado_ula;
             cpu->banco_regs->reg[reg_destino] = (char)valor_final;
         }
-        proximo_PC = cpu->pc + 1;
     }
     cpu->pc = proximo_PC;
     cpu->ciclos++;
@@ -213,13 +279,15 @@ void volta_instrucao(CPU *cpu) {
         cpu->cont_i = cpu->historico[cpu->i_hist].cont_i;
         cpu->cont_r = cpu->historico[cpu->i_hist].cont_r;
         cpu->cont_j = cpu->historico[cpu->i_hist].cont_j;
-
+        cpu->est = cpu->historico[cpu->i_hist].est;
+    
         printf("Instrucao desfeita\n"
-                "PC = %d\n", cpu->pc);
+            "PC = %d\n", cpu->pc);
     } else {
         printf("Nao ha instrucoes anteriores. \n");
     }
-}
+} 
+
 void executa_programa(CPU *cpu) {
     if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
         printf("Nenhuma instrucao carregada.\n");
@@ -229,4 +297,5 @@ void executa_programa(CPU *cpu) {
         executa_instrucao(cpu);
     }
     printf("\nExecucao finalizada com sucesso em %d ciclos.\n", cpu->ciclos);
+    print_est(cpu);
 };

@@ -3,13 +3,14 @@
 #include <string.h>
 #include "sistema.h"
 
-int ula(int A, int B, int controle, int *overflow){
+int ula(int A, int B, int controle, int *overflow, int *flag_Zero){
     int resultado=0;
     *overflow=0;
+    *flag_Zero=0;
 
     switch(controle){
         case 0: //add
-            resultado = A+B;
+            resultado = A + B;
             if ((A>0 && B>0 && resultado <0) || (A<0 && B<0 && resultado >0)){
                 *overflow = 1;
             }
@@ -17,7 +18,7 @@ int ula(int A, int B, int controle, int *overflow){
         case 1: //sub
             resultado = A - B;
             if((A>0 && B<0 && resultado <0) || (A<0 && B>0 && resultado >0)){
-                *overflow=1;
+                *overflow=1; 
             }
         break;
         case 2: //and
@@ -29,6 +30,9 @@ int ula(int A, int B, int controle, int *overflow){
         default: 
             printf("Operacao nao implementada\n");
         break;
+    }
+        if(resultado==0){
+             *flag_Zero=1;
     }
     return resultado;
 }

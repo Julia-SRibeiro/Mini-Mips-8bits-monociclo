@@ -63,7 +63,6 @@ void carrega_mem (CPU *cpu){
         strcpy(cpu->mem_inst->inst[cpu->mem_inst->tamanho].inst_bin, bits);
         cpu->mem_inst->tamanho++;
     }
-
     printf("%d instrucoes carregadas.\n", MAX_MEM);
     fclose(arquivo);
 }
@@ -73,7 +72,6 @@ void print_mem_inst(CPU *cpu){
    printf("| Addr | Binario          |");
    printf("\n+------+------------------+\n");
 
-
    for (int i = 0; i < MAX_MEM; i++){
        instrucao *inst = &cpu->mem_inst->inst[i];
        printf("| %4d | %-16s |\n", i, inst -> inst_bin);
@@ -82,9 +80,8 @@ void print_mem_inst(CPU *cpu){
    printf("Total: %d instrucoes\n", cpu->mem_inst->tamanho);
 }
 
-void disassembla(instrucao *inst, char *buffer) {
-    
-    decoder(inst); 
+void disassembla(instrucao *inst, char *buffer, CPU *cpu) {
+    decoder(inst, cpu); 
 
     switch (inst->opcode) {
         case 0: // Tipo R
@@ -121,11 +118,10 @@ void salva_asm(CPU *cpu) {
         printf("Erro ao criar arquivo.\n");
         return;
     }
-    fprintf(f, "main:\n");
     for (int i = 0; i < cpu->mem_inst->tamanho; i++) {
         char linha_asm[64];
-        disassembla(&cpu->mem_inst->inst[i], linha_asm);
-        fprintf(f, "    %s \n", linha_asm);
+        disassembla(&cpu->mem_inst->inst[i], linha_asm, cpu);
+        fprintf(f, "%s \n", linha_asm);
     }
 
     fclose(f);

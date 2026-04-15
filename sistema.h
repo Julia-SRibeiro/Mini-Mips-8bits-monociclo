@@ -35,14 +35,21 @@ typedef struct {
   int esc_mem; // 1=escreve memoria
   int branch; // 1=BEQ      
   int jump; // 1=JUMP
-  int controle_ula; // ULA_ADD/SUB/AND/OR
+  int controle_ula; // ULA_ADD/SUB/AND/
 } sinais;
+
+typedef struct {
+    int total_inst, add, sub, and_op, or_op;
+    int addi, sw, lw, beq, jump;
+    int total_r, total_i, total_j;
+} estatisticas;
 
 typedef struct {
   int pc;
   char reg[MAX_REG];
   int dados[MAX_MEM];
   int cont_r, cont_i, cont_j, cont_total;
+  estatisticas est;
 } salva_estado;
 
 typedef struct {
@@ -54,7 +61,9 @@ typedef struct {
     int cont_r, cont_i, cont_j, cont_total;
     int i_hist;
     int ciclos;
+    estatisticas est;
 } CPU;
+
 
 // FUNCTIONS
 void limpa_buffer();
@@ -69,13 +78,14 @@ void print_complete(CPU *cpu);
 int separa_bits(char *b, int ini, int nBits);
 int bits_imm(char *b, int ini, int nBits);
 int bits_jump(char *b);
-sinais decoder(instrucao *inst);
-int ula(int A, int B, int controle, int* overflow);
+sinais decoder(instrucao *inst, CPU *cpu);
+int ula(int A, int B, int controle, int* overflow,  int* flag_zero);
 void salvar_estado(CPU *cpu);
 void executa_instrucao(CPU *cpu);
 void volta_instrucao(CPU *cpu);
 void executa_programa(CPU *cpu);
-void disassembla(instrucao *inst, char *buffer);
+void disassembla(instrucao *inst, char *buffer, CPU *cpu);
 void salva_asm(CPU *cpu);
+void print_est(CPU *cpu);
 
 #endif
