@@ -10,6 +10,8 @@ void carrega_dat (CPU *cpu){
     limpa_buffer();
     scanf("%s", arq);
 
+    strcat(arq, ".dat");
+
     // Abre arquivo no modo leitura
     FILE* arquivo = fopen(arq, "r");
     if(arquivo == NULL){
@@ -53,11 +55,18 @@ void carrega_dat (CPU *cpu){
     fclose(arquivo);
 }
 
+void inicializa_dat(CPU *cpu){
+    
+        cpu->mem_dados->dados = (int*) malloc(sizeof(int) * MAX_MEM);
+        if (cpu->mem_dados->dados == NULL) return;
+        
+        for(int i = 0; i < MAX_MEM; i++){
+            cpu->mem_dados->dados[i] = 0;
+       }
+       cpu->mem_dados->tamanho = MAX_MEM;
+}
+
 void print_mem_dat(CPU *cpu){
-   if (cpu->mem_dados->dados == NULL) {
-       printf("Memoria de dados nao carregada.\n");
-       return;
-   }
 
    int total = cpu->mem_dados->tamanho;
 
@@ -85,6 +94,8 @@ void salva_dat(CPU *cpu) {
     printf("Nome do arquivo de saida .dat: ");
     limpa_buffer();
     scanf("%s", arq);
+
+    strcat(arq, ".");
 
     FILE* arquivo = fopen(arq, "w");
     if (arquivo == NULL) {

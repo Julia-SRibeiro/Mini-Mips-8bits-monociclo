@@ -17,9 +17,10 @@ int main(){
     cpu->mem_dados->dados = NULL;
     cpu->pc = cpu->ciclos = cpu->i_hist = 0;
     inicializa_reg(cpu);
+    inicializa_dat(cpu);
 
     do {
-        printf("\nMENU\n"
+        printf("\n----------------------    MENU    ----------------------\n"
             "1. Carregar memoria de instrucoes (.mem)\n"
             "2. Carregar memoria de Dados (.dat)\n"
             "3. Executa Programa (Run)\n"
@@ -34,7 +35,13 @@ int main(){
             "12. Salvar .asm\n"
             "0. Sair\n"
             "Digite uma opcao: ");
-        scanf("%d", &menu);
+
+        if (scanf("%d", &menu) != 1) {
+            printf("\nOpção inválida. Insira um numero valido.\n");
+            while (getchar() != '\n');
+            menu = -1;
+            continue; 
+        }
 
         switch (menu) {
             case 1:
@@ -56,7 +63,7 @@ int main(){
                 volta_instrucao(cpu);
             break;
             case 6:
-                // Reset
+                reset_programa(cpu);
             break;
             case 7:
                 print_mem_inst(cpu);
@@ -167,7 +174,11 @@ void salvar_estado(CPU *cpu) {
         cpu->i_hist++;
     }
 }
+
+
+
 void executa_instrucao(CPU *cpu) {
+    
     if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
         printf("Nenhuma instrucao carregada.\n");
         return;
@@ -177,9 +188,15 @@ void executa_instrucao(CPU *cpu) {
     salvar_estado(cpu);
     sinais s = decoder(inst, cpu);
     int proximo_PC=0;
-    printf("PC = %d\n", (cpu->pc));
+
+    printf("\n----------  PC = %d  ----------", (cpu->pc));
+    printf("\nInstrução: ");
+    print_asm(cpu);
+    printf("\n");
 
     cpu->est.total_inst++;
+
+    
 
     if (inst->opcode == 0) {
         cpu->est.total_r++;
@@ -268,6 +285,7 @@ void executa_instrucao(CPU *cpu) {
     cpu->pc = proximo_PC;
     cpu->ciclos++;
 }
+
 void volta_instrucao(CPU *cpu) {
     if(cpu->i_hist > 0) {
         cpu->i_hist--;
@@ -281,8 +299,10 @@ void volta_instrucao(CPU *cpu) {
         cpu->cont_j = cpu->historico[cpu->i_hist].cont_j;
         cpu->est = cpu->historico[cpu->i_hist].est;
     
-        printf("Instrucao desfeita\n"
-            "PC = %d\n", cpu->pc);
+        printf("\n----------  PC = %d  ----------", (cpu->pc));
+        printf("Instrução: ");
+        print_asm(cpu);
+        printf("\n");
     } else {
         printf("Nao ha instrucoes anteriores. \n");
     }
@@ -293,9 +313,24 @@ void executa_programa(CPU *cpu) {
         printf("Nenhuma instrucao carregada.\n");
         return;
     }
+    printf("passou");
     while(cpu->ciclos < MAX_MEM) {
         executa_instrucao(cpu);
     }
     printf("\nExecucao finalizada com sucesso em %d ciclos.\n", cpu->ciclos);
     print_est(cpu);
-};
+}
+
+void reset_programa(CPU *cpu) {
+
+    cpu->pc = 0;
+    
+    cpu->ciclos = 0;
+    cpu->i_hist = 0;
+
+    inicializa_reg(cpu);
+
+    memset(&cpu->est, 0, sizeof(estatisticas));
+
+    printf("\nSimulador resetado com sucesso!\n");
+}

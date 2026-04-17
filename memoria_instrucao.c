@@ -10,6 +10,8 @@ void carrega_mem (CPU *cpu){
     limpa_buffer();
     scanf("%s", arq);
 
+    strcat(arq, ".mem");
+
     // Abre arquivo no modo leitura
     FILE* arquivo = fopen(arq, "r"); 
     if(arquivo == NULL){
@@ -62,22 +64,42 @@ void carrega_mem (CPU *cpu){
 
         strcpy(cpu->mem_inst->inst[cpu->mem_inst->tamanho].inst_bin, bits);
         cpu->mem_inst->tamanho++;
+        
     }
-    printf("%d instrucoes carregadas.\n", MAX_MEM);
+    if(cpu->mem_inst->tamanho > 0){
+        printf("Instruções carregadas com sucesso para a Memória de Instruções!\n");
+    }
     fclose(arquivo);
 }
 
 void print_mem_inst(CPU *cpu){
-   printf("\n+------+------------------+\n");
-   printf("| Addr | Binario          |");
-   printf("\n+------+------------------+\n");
 
-   for (int i = 0; i < MAX_MEM; i++){
-       instrucao *inst = &cpu->mem_inst->inst[i];
-       printf("| %4d | %-16s |\n", i, inst -> inst_bin);
-   }
-   printf("+------+------------------+\n");
-   printf("Total: %d instrucoes\n", cpu->mem_inst->tamanho);
+    if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
+        printf("Nenhuma instrucao carregada.\n");
+        return;
+    }
+
+    printf("\n+------------------------------------------------------+\n");
+    printf("|                 Memória de Instruções                |");
+    printf("\n+------+------------------+----------------------------+\n");
+    printf("| Addr | Binario          |          Assembly          |");
+    printf("\n+------+------------------+----------------------------+\n");
+
+   
+    for (int i = 0; i < MAX_MEM; i++){
+        instrucao *inst = &cpu->mem_inst->inst[i];
+        printf("| %4d | %-16s |", i, inst -> inst_bin);
+        if(i < cpu->mem_inst->tamanho){
+            int pc_original = cpu->pc;
+            cpu->pc = i;
+            print_asm(cpu);
+            printf("|\n");
+            cpu->pc = pc_original;
+        }else{
+            printf("%-28s|\n", "");
+        }
+    }
+    printf("+------+------------------+----------------------------+\n");
 }
 
 void disassembla(instrucao *inst, char *buffer, CPU *cpu) {
@@ -104,7 +126,7 @@ void disassembla(instrucao *inst, char *buffer, CPU *cpu) {
 
 void salva_asm(CPU *cpu) {
     if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
-        printf("Erro: Memoria de instrucoes vazia.\n");
+        printf("Memoria de instrucoes vazia.\n");
         return;
     }
 
@@ -112,6 +134,8 @@ void salva_asm(CPU *cpu) {
     printf("Nome do arquivo de saida .asm: ");
     limpa_buffer();
     scanf("%s", arq);
+
+    strcat(arq, ".asm");
 
     FILE *f = fopen(arq, "w");
     if (!f) {
@@ -126,4 +150,12 @@ void salva_asm(CPU *cpu) {
 
     fclose(f);
     printf("Arquivo '%s' salvo com sucesso!\n", arq);
+}
+
+void print_asm(CPU *cpu){
+
+    char inst_asm[64];
+    disassembla(&cpu->mem_inst->inst[cpu->pc], inst_asm, cpu);
+    printf("%-28s", inst_asm);
+
 }

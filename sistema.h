@@ -87,5 +87,8 @@ void executa_programa(CPU *cpu);
 void disassembla(instrucao *inst, char *buffer, CPU *cpu);
 void salva_asm(CPU *cpu);
 void print_est(CPU *cpu);
+void print_asm(CPU *cpu);
+void reset_programa(CPU *cpu);
+void inicializa_dat(CPU *cpu);
 
 #endif
