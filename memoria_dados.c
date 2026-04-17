@@ -95,7 +95,7 @@ void salva_dat(CPU *cpu) {
     limpa_buffer();
     scanf("%s", arq);
 
-    strcat(arq, ".");
+    strcat(arq, ".dat");
 
     FILE* arquivo = fopen(arq, "w");
     if (arquivo == NULL) {
