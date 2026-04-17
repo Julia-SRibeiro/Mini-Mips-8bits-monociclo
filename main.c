@@ -12,7 +12,8 @@ int main(){
     cpu->mem_dados = (memoria_dados*) malloc(sizeof(memoria_dados));
     cpu->banco_regs = (banco_registradores*) malloc(sizeof(banco_registradores));
     cpu->historico = (salva_estado*) malloc(sizeof(salva_estado) * MAX_MEM);
-    
+    memset(cpu->historico, 0, sizeof(salva_estado) * MAX_MEM);
+
     cpu->mem_inst->inst = NULL;
     cpu->mem_dados->dados = NULL;
     cpu->pc = cpu->ciclos = cpu->i_hist = 0;
@@ -167,16 +168,14 @@ void print_est(CPU *cpu) {
 }
 
 void salvar_estado(CPU *cpu) {
-    if (cpu->i_hist < MAX_MEM) {
-        cpu->historico[cpu->i_hist].pc = cpu->pc;
-        memcpy(cpu->historico[cpu->i_hist].reg, cpu->banco_regs->reg, MAX_REG * sizeof(char));
-        memcpy(cpu->historico[cpu->i_hist].dados, cpu->mem_dados->dados, MAX_MEM * sizeof(int));
-        cpu->historico[cpu->i_hist].cont_r = cpu->cont_r;
-        cpu->historico[cpu->i_hist].cont_i = cpu->cont_i;
-        cpu->historico[cpu->i_hist].cont_j = cpu->cont_j;
-        cpu->historico[cpu->i_hist].est = cpu->est;
-        cpu->i_hist++;
-    }
+    int idx = cpu->ciclos % MAX_MEM;
+
+    cpu->historico[idx].pc = cpu->pc;
+    memcpy(cpu->historico[idx].reg, cpu->banco_regs->reg, sizeof(cpu->banco_regs->reg));
+    memcpy(cpu->historico[idx].dados, cpu->mem_dados->dados, sizeof(int) * MAX_MEM);
+    cpu->historico[idx].est = cpu->est;
+
+    if (cpu->i_hist < MAX_MEM) cpu->i_hist++;
 }
 
 
@@ -283,26 +282,19 @@ void executa_instrucao(CPU *cpu) {
 }
 
 void volta_instrucao(CPU *cpu) {
-    if(cpu->i_hist > 0) {
-        cpu->i_hist--;
+    if (cpu->ciclos > 0 && cpu->i_hist > 0) {
         cpu->ciclos--;
+        cpu->i_hist--;
+        int idx = cpu->ciclos % MAX_MEM;
 
-        cpu->pc = cpu->historico[cpu->i_hist].pc;
-        memcpy(cpu->banco_regs->reg, cpu->historico[cpu->i_hist].reg, sizeof(cpu->historico[cpu->i_hist].reg));
-        memcpy(cpu->mem_dados->dados, cpu->historico[cpu->i_hist].dados, sizeof(cpu->historico[cpu->i_hist].dados));
-        cpu->cont_i = cpu->historico[cpu->i_hist].cont_i;
-        cpu->cont_r = cpu->historico[cpu->i_hist].cont_r;
-        cpu->cont_j = cpu->historico[cpu->i_hist].cont_j;
-        cpu->est = cpu->historico[cpu->i_hist].est;
-    
-        printf("\n----------  PC = %d  ----------", (cpu->pc));
-        printf("Instrução: ");
-        print_asm(cpu);
-        printf("\n");
+        cpu->pc = cpu->historico[idx].pc;
+        memcpy(cpu->historico[idx].reg, cpu->banco_regs->reg, sizeof(cpu->banco_regs->reg));
+        memcpy(cpu->historico[idx].dados, cpu->mem_dados->dados, sizeof(int) * MAX_MEM);
+        cpu->est = cpu->historico[idx].est;
     } else {
-        printf("Nao ha instrucoes anteriores. \n");
+        printf("Limite do historico atingido!\n");
     }
-} 
+}
 
 void executa_programa(CPU *cpu) {
     if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
@@ -323,15 +315,16 @@ void executa_programa(CPU *cpu) {
 }
 
 void reset_programa(CPU *cpu) {
-
     cpu->pc = 0;
-    
     cpu->ciclos = 0;
-    cpu->i_hist = 0;
+    cpu->i_hist = 0; // Já existe no seu código
 
     inicializa_reg(cpu);
+    
+    for(int i = 0; i < MAX_MEM; i++) {
+        cpu->mem_dados->dados[i] = 0; 
+    }
 
     memset(&cpu->est, 0, sizeof(estatisticas));
-
     printf("\nSimulador resetado com sucesso!\n");
 }

@@ -90,5 +90,6 @@ void print_est(CPU *cpu);
 void print_asm(CPU *cpu);
 void reset_programa(CPU *cpu);
 void inicializa_dat(CPU *cpu);
+int hist_start;
 
 #endif
