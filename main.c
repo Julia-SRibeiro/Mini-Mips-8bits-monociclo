@@ -319,7 +319,7 @@ void executa_programa(CPU *cpu) {
         }
     }
     printf("\nExecucao finalizada com sucesso em %d ciclos.\n", cpu->ciclos);
-    print_est(cpu);
+
 }
 
 void reset_programa(CPU *cpu) {
