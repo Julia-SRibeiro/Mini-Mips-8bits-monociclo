@@ -117,6 +117,7 @@ void disassembla(instrucao *inst, char *buffer, CPU *cpu) {
             break;
         case 2:  sprintf(buffer, "j %d", inst->addr); break;
         case 4:  sprintf(buffer, "addi $r%d, $r%d, %d", inst->rt, inst->rs, inst->imm); break;
+        case 5:  sprintf(buffer, "Instrução de parada"); break;
         case 8:  sprintf(buffer, "beq $r%d, $r%d, %d", inst->rt, inst->rs, inst->imm); break;
         case 11: sprintf(buffer, "lw $r%d, %d($%d)", inst->rt, inst->imm, inst->rs); break;
         case 15: sprintf(buffer, "sw $r%d, %d($%d)", inst->rt, inst->imm, inst->rs); break;

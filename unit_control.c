@@ -65,6 +65,18 @@ sinais decoder(instrucao *inst, CPU *cpu) {
             s.jump = 0;
             s.controle_ula = 0; // soma
         break;
+        case 5: //Instrução de parada opcode 0101
+            inst->type_inst = type_outros;
+            inst->rs = inst->rt = inst->rd = inst->funct = inst->imm = inst->addr = 0;
+            s.reg_destino = 0;
+            s.ula_fonte = 0;
+            s.mem_para_reg = 0;
+            s.esc_reg = 0;
+            s.esc_mem = 0;
+            s.branch = 0;
+            s.jump = 0;
+            s.controle_ula = 0;
+        break;
         case 8: // Tipo I - Beq
             inst->type_inst = 2;
             inst->rs = separa_bits(b, 4, 3);

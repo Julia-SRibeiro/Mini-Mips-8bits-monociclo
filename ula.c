@@ -11,9 +11,11 @@ int ula(int A, int B, int controle, int *overflow, int *flag_Zero){
     switch(controle){
         case 0: //add
             resultado = A + B;
-            if ((A>0 && B>0 && resultado <0) || (A<0 && B<0 && resultado >0)){
+            char res8 = (char)resultado;
+            if ((A>0 && B>0 && res8 <0) || (A<0 && B<0 && res8 >0)){
                 *overflow = 1;
             }
+            resultado = res8;
         break;
         case 1: //sub
             resultado = A - B;

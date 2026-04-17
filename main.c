@@ -120,8 +120,12 @@ int separa_bits(char *b, int ini, int nBits) {
 }
 int bits_imm(char *b, int ini, int nBits) {
     int val = separa_bits(b, ini, nBits);
-    signed char sinal = (signed char)(val << 2);
-    return (int)(sinal >> 2);
+    
+    if (val & (1 << (nBits - 1))) {
+
+        return val | (~0 << nBits);
+    }
+    return val;
 }
 int bits_jump(char *b) {
     int val = separa_bits(b, 4, 12);
@@ -176,7 +180,6 @@ void salvar_estado(CPU *cpu) {
 }
 
 
-
 void executa_instrucao(CPU *cpu) {
     
     if (cpu->mem_inst->inst == NULL || cpu->mem_inst->tamanho == 0) {
@@ -196,11 +199,8 @@ void executa_instrucao(CPU *cpu) {
 
     cpu->est.total_inst++;
 
-    
-
     if (inst->opcode == 0) {
         cpu->est.total_r++;
-
         switch(inst->funct){
             case 0: cpu->est.add++; break;
             case 1: cpu->est.sub++; break;
@@ -229,57 +229,53 @@ void executa_instrucao(CPU *cpu) {
         cpu->est.jump++;
     }
 
-    // Le registradores
     int dado_rs = (int)cpu->banco_regs->reg[inst->rs];
     int operando_B;
     if(s.ula_fonte == 1) {
-        operando_B = inst->imm; // imediato
+        operando_B = inst->imm;
     }
     else {
-        operando_B = (int)cpu->banco_regs->reg[inst->rt]; // registrador
+        operando_B = (int)cpu->banco_regs->reg[inst->rt];
     }
 
-    // Realiza operacao
     int overflow, flag_zero;
     int resultado_ula = ula(dado_rs, operando_B, s.controle_ula, &overflow, &flag_zero);
 
-    if(flag_zero == 1){
-        printf("PC=%d | A=%d B=%d | Resultado=%d | Flag=%d \n", cpu->pc, dado_rs, operando_B, resultado_ula, flag_zero);
-    }
-
     if (overflow == 1){
-        printf("PC=%d | A=%d B=%d | Resultado=%d | Overflow=%d \n", cpu->pc, dado_rs, operando_B, resultado_ula, overflow);
+        printf("PC=%d | A=%d B=%d | Resultado=%d | Overflow=%d \n", cpu->pc, dado_rs, operando_B, (signed char)resultado_ula, overflow);
+        printf("Overflow detectado. Escrita cancelada\n");
     }
 
-    // Atualiza PC
-    if (s.jump == 1) { //Jump
+    if (s.jump == 1) {
         proximo_PC = inst->addr;
-    } else if (s.branch == 1 && flag_zero == 1) { //BEQ
+    } else if (s.branch == 1 && flag_zero == 1) {
         proximo_PC = cpu->pc + 1 + inst->imm;
     } else {
         proximo_PC = cpu->pc + 1;
 
-        // Acessa memoria
         int dado_lido_mem = 0;
 
-        if (s.mem_para_reg == 1) { // LW
-            if (resultado_ula >= 0 && resultado_ula < MAX_MEM) {
-                dado_lido_mem = cpu->mem_dados->dados[resultado_ula];
-            } else {
-                printf("Endereco de memoria invalido (LW): %d\n", resultado_ula);
+        if (overflow == 0) {
+            if (s.mem_para_reg == 1) {
+                if (resultado_ula >= 0 && resultado_ula < MAX_MEM) {
+                    dado_lido_mem = cpu->mem_dados->dados[resultado_ula];
+                } else {
+                    printf("Endereco de memoria invalido (LW): %d\n", resultado_ula);
+                }
             }
-        }
-        if (s.esc_mem == 1) { // SW
-            if (resultado_ula >= 0 && resultado_ula < MAX_MEM) {
-                cpu->mem_dados->dados[resultado_ula] = operando_B;
-            } else {
-                printf("Endereco de memoria invalido (SW): %d\n", resultado_ula);
+            if (s.esc_mem == 1) {
+                if (resultado_ula >= 0 && resultado_ula < MAX_MEM) {
+                    int dado_rt = (int)cpu->banco_regs->reg[inst->rt];
+                    cpu->mem_dados->dados[resultado_ula] = dado_rt;
+                } else {
+                    printf("Endereco de memoria invalido (SW): %d\n", resultado_ula);
+                }
             }
-        }
-        if (s.esc_reg == 1) {// R e ADDI
-            int reg_destino = (s.reg_destino == 1) ? inst->rd : inst->rt;
-            int valor_final = (s.mem_para_reg == 1) ? dado_lido_mem : resultado_ula;
-            cpu->banco_regs->reg[reg_destino] = (char)valor_final;
+            if (s.esc_reg == 1) {
+                int reg_destino = (s.reg_destino == 1) ? inst->rd : inst->rt;
+                int valor_final = (s.mem_para_reg == 1) ? dado_lido_mem : resultado_ula;
+                cpu->banco_regs->reg[reg_destino] = (char)valor_final;
+            }
         }
     }
     cpu->pc = proximo_PC;
@@ -313,9 +309,14 @@ void executa_programa(CPU *cpu) {
         printf("Nenhuma instrucao carregada.\n");
         return;
     }
-    printf("passou");
-    while(cpu->ciclos < MAX_MEM) {
-        executa_instrucao(cpu);
+    int rodando = 1;
+    while(cpu->ciclos < MAX_MEM && rodando == 1) {
+        if (cpu->mem_inst->inst[cpu->pc].opcode == 5) {
+            rodando = 0;
+            printf("\nInstrucao de parada detectada no PC %d. Encerrando execucao.\n", cpu->pc);
+        }else{
+            executa_instrucao(cpu);
+        }
     }
     printf("\nExecucao finalizada com sucesso em %d ciclos.\n", cpu->ciclos);
     print_est(cpu);
