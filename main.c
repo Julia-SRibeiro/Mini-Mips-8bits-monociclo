@@ -288,9 +288,15 @@ void volta_instrucao(CPU *cpu) {
         int idx = cpu->ciclos % MAX_MEM;
 
         cpu->pc = cpu->historico[idx].pc;
-        memcpy(cpu->historico[idx].reg, cpu->banco_regs->reg, sizeof(cpu->banco_regs->reg));
-        memcpy(cpu->historico[idx].dados, cpu->mem_dados->dados, sizeof(int) * MAX_MEM);
+        memcpy(cpu->banco_regs->reg, cpu->historico[idx].reg, sizeof(cpu->banco_regs->reg));
+        memcpy(cpu->mem_dados->dados, cpu->historico[idx].dados, sizeof(int) * MAX_MEM);
         cpu->est = cpu->historico[idx].est;
+
+        printf("\n----------  PC = %d  ----------", cpu->pc);
+        printf("\nInstrução atual: ");
+        print_asm(cpu);
+        printf("\n");
+
     } else {
         printf("Limite do historico atingido!\n");
     }
